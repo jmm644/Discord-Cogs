@@ -29,7 +29,7 @@ This should work with all custom and standard emojis.
 ## categories
 - Aliases - `null`
 - Usage - `<prefix>categories`
-- Example - `!create example_category`
+- Example - `!categories`
 - Description - Check what categories are available.
 
 
