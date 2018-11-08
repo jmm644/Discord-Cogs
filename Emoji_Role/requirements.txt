@@ -1,2 +1,2 @@
 pip
-git+git://github.com/vincentmwong/emoji_list.git
+emoji_list
