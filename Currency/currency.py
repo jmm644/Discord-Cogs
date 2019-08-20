@@ -83,13 +83,6 @@ class Account:
         self._table.upsert(dict(member=self.id, balance=self.balance-amount), ['member'])
 
 
-bot = commands.Bot(command_prefix='!')
-
-
-@bot.event
-async def on_ready():
-    print('Bot Started')
-
 
 class Currency(commands.Cog):
     '''
