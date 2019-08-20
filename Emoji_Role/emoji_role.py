@@ -19,42 +19,59 @@ class Check_Emoji(commands.Converter):
         return emoji
 
 
-class Emoji_Roles:
+def check_guild(self, guild):
+    if str(guild.id) not in server_emojis.data:
+        server_emojis.data[str(guild.id)] = {}
+
+
+class Emoji_Roles(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
 
+    @commands.Cog.listener()
+    async def on_ready(self):
+        for guild in self.bot.guilds:
+            check_guild(guild)
+
+    @commands.Cog.listener()
+    async def on_guild_join(self, guild):
+        check_guild(guild)
+
+    @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
         if payload.message_id in saved_notifications.data:
             user, role = self.parse_reaction(payload)
             if role:
                 await user.add_roles(role)
 
+    @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload):
         if payload.message_id in saved_notifications.data:
             user, role = self.parse_reaction(payload)
             if role:
                 await user.remove_roles(role)
 
-    def parse_reaction(self, payload):
-        guild = self.bot.get_guild(payload.guild_id)
-        user = guild.get_member(payload.user_id)
-        role = None
-        if not user.bot:
-            role_name = server_emojis.data.get(payload.emoji.name).get('role')
-            role = get(guild.roles, name=role_name)
-        return user, role
-
+    @commands.Cog.listener()
     async def on_raw_message_delete(self, payload):
         if payload.message_id in saved_notifications.data:
             saved_notifications.data.remove(payload.message_id)
             saved_notifications.save
 
+    def parse_reaction(self, payload):
+        guild = self.bot.get_guild(payload.guild_id)
+        user = guild.get_member(payload.user_id)
+        role = None
+        if not user.bot:
+            role_name = server_emojis.data.get(str(guild.id)).get(payload.emoji.name).get('role')
+            role = get(guild.roles, name=role_name)
+        return user, role
+
     @checks.is_admin()
     @commands.command()
     async def categories(self, ctx):
         ': Check what categories are available'
-        embed = discord.Embed(title='Categories', description='\n'.join(item for item in self._categories), color=discord.Color.green())
+        embed = discord.Embed(title='Categories', description='\n'.join(item for item in self._categories(ctx.guild)), color=discord.Color.green())
         await ctx.send(embed=embed)
 
     @checks.is_admin()
@@ -68,9 +85,9 @@ class Emoji_Roles:
             'description': description
         }
         if isinstance(emoji, str):
-            server_emojis.data[emoji] = d
+            server_emojis.data[str(ctx.guild.id)][emoji] = d
         else:
-            server_emojis.data[emoji.name] = d
+            server_emojis.data[str(ctx.guild.id)][emoji.name] = d
         server_emojis.save
         await ctx.send(f'{emoji} will assign {role.mention} in newly created **{category}** notifications.')
         await ctx.message.delete()
@@ -80,9 +97,9 @@ class Emoji_Roles:
     async def delete_emoji_role(self, ctx, emoji: Check_Emoji):
         ': Enter the emoji you would like to remove'
         if isinstance(emoji, str):
-            del server_emojis.data[emoji]
+            del server_emojis.data[str(ctx.guild.id)][emoji]
         else:
-            del server_emojis.data[emoji.name]
+            del server_emojis.data[str(ctx.guild.id)][emoji.name]
         server_emojis.save
         await ctx.send(f'{emoji} will no longer assign roles. Please create a new message to assign roles.')
 
@@ -91,9 +108,9 @@ class Emoji_Roles:
     async def create(self, ctx, category: str):
         ': Create a role assigning message from the categories you have created.'
         category = category.lower()
-        if category in self._categories:
+        if category in self._categories(ctx.guild):
             config = []
-            for key, value in server_emojis.data.items():
+            for key, value in server_emojis.data[str(ctx.guild.id)].items():
                 if value.get('type') == category:
                     em = [await Check_Emoji().convert(ctx, key), get(ctx.guild.roles, name=value.get("role")).mention, value.get("description")]
                     config.append(em)
@@ -107,9 +124,8 @@ class Emoji_Roles:
         else:
             await ctx.send(f'*{category}* in not a valid category.')
 
-    @property
-    def _categories(self):
-        return set(list(v.get('type') for v in server_emojis.data.values()))
+    def _categories(self, guild):
+        return set(list(v.get('type') for v in server_emojis.data[str(guild.id)].values()))
 
 
 def setup(bot):
