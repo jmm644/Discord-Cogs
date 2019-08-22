@@ -95,6 +95,7 @@ class Emoji_Roles(commands.Cog):
             tags = page.findAll(
                 "p", {"style": "font-family: Segoe UI Emoji; font-size: 3.5em"}
             )
+            all_emojis.data = []
             for emojis in tags:
                 all_emojis.data += emojis.text.split()
             all_emojis.save()
