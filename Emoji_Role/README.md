@@ -1,6 +1,12 @@
+
+
+
 # Assign role with an emoji reaction
 
 This should work with all custom and standard emojis.
+
+# New!
+- Run the new `update_emojis` command before any other commands or when new emojis are created.
 
 # Getting Started
 ## This is built for my [Basic-Cog-Bot](https://github.com/stroupbslayen/Basic-Cog-Bot)
@@ -32,6 +38,11 @@ This should work with all custom and standard emojis.
 - Example - `!categories`
 - Description - Check what categories are available.
 
+## update_emojis
+- Aliases - `null`
+- Usage - `<prefix>update_emojis`
+- Example - `!update_emojis`
+- Description - Update the bots emoji support. 
 
 # Notes
 - Python 3.6 is required
